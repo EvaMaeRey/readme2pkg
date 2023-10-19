@@ -13,11 +13,10 @@ chunk_to_dir <- function(chunk_name, dir = "R/", extension = ".R"){
 
     for(i in 1:length(chunk_name)){
 
-knitr::knit_code$get(name = chunk_name[i]) |>
+  knitr::knit_code$get(name = chunk_name[i]) |>
     paste(collapse = "\n") |>
     writeLines(con = paste0(dir, chunk_name[i], extension))
 
+    }
+  
   }
-  }
-
-
