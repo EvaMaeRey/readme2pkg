@@ -112,15 +112,13 @@ readme2pkg::chunk_to_dir("add_one_code", dir = "R")
 
 <!-- badges: end -->
 
-I would like to
+I would like to:
 
-  - educate on new strategies for extending ggplot2
-  - I would like to extend ggplot2
-  - I like to have more fun while developing by doing so
-    colaboratively\!
-  - I’m happy to work with non-package developer and would like my
-    decision to be informed by their expertise.
-  - All these goals, but limits on time
+  - have more fun while developing by doing so collaboratively\!
+  - work with non-package developer and have my decision to be informed
+    by their expertise - possibly getting their feedback right in
+    github?
+  - keep better track of where I am in the development process.
 
 ## Other’s reflecting on how it might be difficult to find the ‘narrative’ from an R package
 
