@@ -2,25 +2,28 @@
   - [{readme2pkg} lets you send code chunks to .R files in a project
     subdirectory.](#readme2pkg-lets-you-send-code-chunks-to-r-files-in-a-project-subdirectory)
       - [Background and motivation](#background-and-motivation)
-      - [Other’s reflecting on how it might be difficult to get into
-        ‘narrative’ of R
-        package](#others-reflecting-on-how-it-might-be-difficult-to-get-into-narrative-of-r-package)
-  - [see also](#see-also)
+      - [Other’s reflecting on how it might be difficult to find the
+        ‘narrative’ from an R
+        package](#others-reflecting-on-how-it-might-be-difficult-to-find-the-narrative-from-an-r-package)
+  - [More great package building resources to be aware
+    of](#more-great-package-building-resources-to-be-aware-of)
   - [How we make and use {readme2pkg}](#how-we-make-and-use-readme2pkg)
   - [Part 0. Presteps](#part-0-presteps)
-  - [A. created a github repository,
-    e.g. <https://github.com/EvaMaeRey/readme2pkg>](#a-created-a-github-repository-eg-httpsgithubcomevamaereyreadme2pkg)
-  - [B. create a directory ("coolest\_pkg) via projects, linking your
-    repo.](#b-create-a-directory-coolest_pkg-via-projects-linking-your-repo)
-  - [C. create README.rmd in a directory via
-    usethis::use\_readme\_rmd()](#c-create-readmermd-in-a-directory-via-usethisuse_readme_rmd)
-  - [Part 1. Develop functionality](#part-1-develop-functionality)
+      - [A. created a github repository,
+        e.g. <https://github.com/EvaMaeRey/readme2pkg>](#a-created-a-github-repository-eg-httpsgithubcomevamaereyreadme2pkg)
+      - [B. create a local directory ("coolest\_pkg) via projects,
+        linking your
+        repo.](#b-create-a-local-directory-coolest_pkg-via-projects-linking-your-repo)
+      - [C. create README.rmd in a directory via
+        usethis::use\_readme\_rmd()](#c-create-readmermd-in-a-directory-via-usethisuse_readme_rmd)
+  - [Part 1. Develop functionality (in
+    readme)](#part-1-develop-functionality-in-readme)
       - [write `chunk_to_dir()`](#write-chunk_to_dir)
       - [write `chunk_to_r()` and
         `chunk_to_tests_testthat()`](#write-chunk_to_r-and-chunk_to_tests_testthat)
       - [Try it out](#try-it-out)
-  - [Part 2. Packaging and documentation 🚧
-    ✅](#part-2-packaging-and-documentation--)
+  - [Part 2. Packaging and documentation 🚧 ✅ ()from
+    readme](#part-2-packaging-and-documentation---from-readme)
       - [Step i. Minimal requirements for github package. Have
         you:](#step-i-minimal-requirements-for-github-package-have-you)
           - [Created files for package archetecture with
@@ -51,7 +54,9 @@
             🚧](#have-you-worked-added-a-description-and-author-information-in-the-description-file-)
           - [Addressed *all* notes, warnings and errors.
             🚧](#addressed-all-notes-warnings-and-errors-)
-      - [Promote](#promote)
+      - [Promote (less detail here at this point - reflects the rawness
+        of
+        readme2pkg)](#promote-less-detail-here-at-this-point---reflects-the-rawness-of-readme2pkg)
           - [Package website built? 🚧](#package-website-built-)
           - [Package website deployed? 🚧](#package-website-deployed-)
       - [Harden](#harden)
@@ -64,9 +69,17 @@
     `devtools::build()`](#install-development-package-with-devtoolsbuild)
       - [Repo Directory and files
         report](#repo-directory-and-files-report)
-  - [Time to promote your package](#time-to-promote-your-package)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+``` r
+package_exists <- T
+print_reports <- F
+build_package <- T
+build_package_w_readme <- T
+
+print_reports_action <- ifelse(print_reports, "asis", "hide")
+```
 
 # {readme2pkg} lets you send code chunks to .R files in a project subdirectory.
 
@@ -109,7 +122,7 @@ I would like to
     decision to be informed by their expertise.
   - All these goals, but limits on time
 
-## Other’s reflecting on how it might be difficult to get into ‘narrative’ of R package
+## Other’s reflecting on how it might be difficult to find the ‘narrative’ from an R package
 
 > ‘finding ways to contribute to open source packages can be daunting um
 > how do you like what what process do you have when you’re first like
@@ -132,12 +145,50 @@ I would like to
 > Packages are not meant to be read and so it is i think fundamentally
 > kind of awkward … <https://www.youtube.com/watch?v=5LktoXh7WvY>
 
-# see also
+# More great package building resources to be aware of
 
-where this emerged?
+  - Jacob Bien & Patrick Vossler’s
+    [litr](https://jacobbien.github.io/litr-project/index.html) -
+    similar motivation, but felt more like for use on a finished
+    product? I guess I like the steps more unbundled than ‘one function
+    to rule them all’.
 
-  - Also see litr - very similar framework, but too bundled up for me,
-    greater focus on package development.
+  - Yihui Xie’s blog 2014-12-29’ [Write An R Package Using Literate
+    Programming Techniques](https://yihui.org/rlp/)
+
+  - Hadley Wickham and Jennifer Bryan’s [R
+    Packages](http://r-pkgs.had.co.nz/)
+
+  - Jim Hester’s [‘You can build a package in 20 minutes’
+    talk](https://posit.co/resources/videos/you-can-make-a-package-in-20-minutes-jim-hester/)
+
+  - My [companion
+    guide](https://evamaerey.github.io/package_in_20_minutes/package_in_20_minutes)
+    to Jim Hester’s talk
+
+  - Cosima Meyer’s [How to write your own R package and publish it on
+    CRAN](https://www.mzes.uni-mannheim.de/socialsciencedatalab/article/r-package/),
+    and from her compiled list, more great resourses I missed in my
+    first round:
+    
+      - [How to develop good R packages (for open science) (Maëlle
+        Salmon)](https://masalmon.eu/2017/12/11/goodrpackages/)
+      - [devtools Cheat
+        Sheet](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf)
+      - [Writing an R package from scratch (Hilary
+        Parker)](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/)
+      - [Your first R package in 1 hour (Shannon
+        Pileggi)](https://www.pipinghotdata.com/talks/2020-10-25-your-first-r-package-in-1-hour/)
+      - [R package primer (Karl
+        Broman)](https://kbroman.org/pkg_primer/)
+      - [Checklist for R Package (Re-)Submissions on CRAN (Saskia
+        Otto)](https://www.marinedatascience.co/blog/2020/01/09/checklist-for-r-package-re-submissions-on-cran/)
+      - [Continuous integration with GitHub Actions (Dean Attali
+        )](https://deanattali.com/blog/migrating-travis-to-github/)
+
+  - RPackages
+
+  - <https://www.youtube.com/watch?v=5LktoXh7WvY>
 
 The goal of readme2pkg collects strategies for making the README.Rmd the
 main workplace and/or storytelling document.
@@ -146,15 +197,20 @@ main workplace and/or storytelling document.
 
 # Part 0. Presteps
 
-# A. created a github repository, e.g. <https://github.com/EvaMaeRey/readme2pkg>
+## A. created a github repository, e.g. <https://github.com/EvaMaeRey/readme2pkg>
 
-# B. create a directory ("coolest\_pkg) via projects, linking your repo.
+## B. create a local directory ("coolest\_pkg) via projects, linking your repo.
 
-# C. create README.rmd in a directory via usethis::use\_readme\_rmd()
+You can do this from RStudio via New Project -\> Version Control -\> Git
+-\> Repository URL (fill field with git repo URL from part A)
 
-# Part 1. Develop functionality
+## C. create README.rmd in a directory via usethis::use\_readme\_rmd()
+
+# Part 1. Develop functionality (in readme)
 
 Write useful code (might be rearrangement of verbose code).
+
+`chunk_to_dir()` will create a file with the chunk name
 
 ## write `chunk_to_dir()`
 
@@ -241,7 +297,7 @@ some technical expertise on that.
 
 -----
 
-# Part 2. Packaging and documentation 🚧 ✅
+# Part 2. Packaging and documentation 🚧 ✅ ()from readme
 
 ## Step i. Minimal requirements for github package. Have you:
 
@@ -253,8 +309,8 @@ You can use this code to list all names of code chunks
 
 ``` r
 knitr::knit_code$get() |> names() # lists all current doc chunk names including from child README.rmd
-#>  [1] "unnamed-chunk-1"  "add_one_code"     "unnamed-chunk-2"  "chunk_to_dir"    
-#>  [5] "convenience"      "unnamed-chunk-3"  "unnamed-chunk-4"  "unnamed-chunk-5" 
+#>  [1] "unnamed-chunk-1"  "unnamed-chunk-2"  "add_one_code"     "unnamed-chunk-3" 
+#>  [5] "chunk_to_dir"     "convenience"      "unnamed-chunk-4"  "unnamed-chunk-5" 
 #>  [9] "unnamed-chunk-6"  "unnamed-chunk-7"  "unnamed-chunk-8"  "unnamed-chunk-9" 
 #> [13] "unnamed-chunk-10" "unnamed-chunk-11" "unnamed-chunk-12" "unnamed-chunk-13"
 #> [17] "unnamed-chunk-14"
@@ -325,7 +381,7 @@ That would look like this…
 
 ### Addressed *all* notes, warnings and errors. 🚧
 
-## Promote
+## Promote (less detail here at this point - reflects the rawness of readme2pkg)
 
 ### Package website built? 🚧
 
@@ -542,20 +598,6 @@ fs::dir_tree(recurse = T)
 <!-- ``` -->
 
 <!-- ```` -->
-
-# Time to promote your package
-
-For more summarized products, you might want to use your thoughtfully
-crafted examples from README.Rmd without all the readme text…
-
-Strategy from within an addition .Rmd file (slides, motivation letter)
-
-```` default
-
-```{r read_in_chunks, eval = F, echo = F, results='hide'}
-knitr::knit_child("../../../README.rmd")
-```
-````
 
 <!-- # Journal article -->
 

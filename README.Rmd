@@ -14,13 +14,18 @@ knitr::opts_chunk$set(
 
 options(tidyverse.quiet = TRUE)
 
-package_exists <- F
+
+```
+
+```{r}
+package_exists <- T
 print_reports <- F
-build_package <- F
+build_package <- T
 build_package_w_readme <- T
 
 print_reports_action <- ifelse(print_reports, "asis", "hide")
 ```
+
 
 # {readme2pkg} lets you send code chunks to .R files in a project subdirectory.
 
@@ -59,7 +64,7 @@ I would like to
 - I'm happy to work with non-package developer and would like my decision to be informed by their expertise.
 - All these goals, but limits on time
 
-## Other's reflecting on how it might be difficult to get into 'narrative' of R package
+## Other's reflecting on how it might be difficult to find the 'narrative' from an R package
 
 > 'finding ways to contribute to open source packages can be daunting um how do you like what what process do you have when you're first like looking at a new project that you might be involved in a new package ...' Colin
 
@@ -68,11 +73,33 @@ because we're plagued by alphabetical ordering it sort of feels like maybe you s
 
 > ... you know you know books are meant to be read. Right, like there's a beginning a middle and an end or like you're told it's a reference book and and it's kind of clear how to go to a particular place. Packages are not meant to be read and so it is i think fundamentally kind of awkward ... https://www.youtube.com/watch?v=5LktoXh7WvY
 
-# see also 
+# More great package building resources to be aware of 
 
-where this emerged?  
 
-- Also see litr - very similar framework, but too bundled up for me, greater focus on package development.
+
+- Jacob Bien & Patrick Vossler's [litr](https://jacobbien.github.io/litr-project/index.html) - similar motivation, but felt more like for use on a finished product? I guess I like the steps more unbundled than 'one function to rule them all'. 
+
+- Yihui Xie's blog 2014-12-29' [Write An R Package Using Literate Programming Techniques](https://yihui.org/rlp/)
+
+- Hadley Wickham and Jennifer Bryan's [R Packages](http://r-pkgs.had.co.nz/)
+
+- Jim Hester's ['You can build a package in 20 minutes' talk](https://posit.co/resources/videos/you-can-make-a-package-in-20-minutes-jim-hester/)
+
+- My [companion guide](https://evamaerey.github.io/package_in_20_minutes/package_in_20_minutes) to Jim Hester's talk
+
+- Cosima Meyer's [How to write your own R package and publish it on CRAN](https://www.mzes.uni-mannheim.de/socialsciencedatalab/article/r-package/), and from her compiled list, more great resourses I missed in my first round:
+
+  - [How to develop good R packages (for open science) (Maëlle Salmon)](https://masalmon.eu/2017/12/11/goodrpackages/)
+  - [devtools Cheat Sheet](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf)
+  - [Writing an R package from scratch (Hilary Parker)](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/)
+  - [Your first R package in 1 hour (Shannon Pileggi)](https://www.pipinghotdata.com/talks/2020-10-25-your-first-r-package-in-1-hour/)
+  - [R package primer (Karl Broman)](https://kbroman.org/pkg_primer/)
+  - [Checklist for R Package (Re-)Submissions on CRAN (Saskia Otto)](https://www.marinedatascience.co/blog/2020/01/09/checklist-for-r-package-re-submissions-on-cran/)
+  - [Continuous integration with GitHub Actions (Dean Attali )](https://deanattali.com/blog/migrating-travis-to-github/)
+
+- RPackages
+
+- https://www.youtube.com/watch?v=5LktoXh7WvY
 
 
 The goal of readme2pkg collects strategies for making the README.Rmd the main workplace and/or storytelling document. 
@@ -81,15 +108,19 @@ The goal of readme2pkg collects strategies for making the README.Rmd the main wo
 
 # Part 0. Presteps
 
-# A. created a github repository, e.g. https://github.com/EvaMaeRey/readme2pkg
+## A. created a github repository, e.g. https://github.com/EvaMaeRey/readme2pkg
 
-# B. create a directory ("coolest_pkg) via projects,  linking your repo.
+## B. create a local directory ("coolest_pkg) via projects,  linking your repo.
 
-# C. create README.rmd in a directory via usethis::use_readme_rmd()
+You can do this from RStudio via New Project -> Version Control -> Git -> Repository URL (fill field with git repo URL from part A)
 
-# Part 1. Develop functionality
+## C. create README.rmd in a directory via usethis::use_readme_rmd()
 
-Write useful code (might be rearrangement of verbose code). 
+# Part 1. Develop functionality (in readme)
+
+Write useful code (might be rearrangement of verbose code).
+
+`chunk_to_dir()` will create a file with the chunk name
 
 ## write `chunk_to_dir()`
 
@@ -173,7 +204,7 @@ It would be good to turn this section into formal tests, but I'm not exactly sur
 if(!build_package_w_readme){knitr::knit_exit()}
 ```
 
-# Part 2. Packaging and documentation  🚧 ✅ 
+# Part 2. Packaging and documentation  🚧 ✅  ()from  readme
 
 ## Step i. Minimal requirements for github package.  Have you:
 
@@ -253,7 +284,7 @@ chunk_to_tests_testthat("test_geom_barlab_count")
 
 ### Addressed *all* notes, warnings and errors. 🚧 
 
-## Promote
+## Promote (less detail here at this point - reflects the rawness of readme2pkg)
 
 ### Package website built? 🚧 
 
@@ -447,25 +478,6 @@ fs::dir_tree(recurse = T)
 
 <!-- ```` -->
 
-
-# Time to promote your package 
-
-
-For more summarized products, you might want to use your thoughtfully crafted examples 
-from README.Rmd without all the readme text... 
-
-Strategy from within an addition .Rmd file (slides, motivation letter)
-
-````{verbatim}
-
-
-```{r read_in_chunks, eval = F, echo = F, results='hide'}
-knitr::knit_child("../../../README.rmd")
-```
-
-
-
-````
 
 
 
