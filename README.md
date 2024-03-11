@@ -1,6 +1,10 @@
 
-  - [{readme2pkg} lets you send code chunks to .R files in a project
-    subdirectory.](#readme2pkg-lets-you-send-code-chunks-to-r-files-in-a-project-subdirectory)
+  - [The intent of {readme2pkg} is to let you build quick packages right
+    from a readme. The function `readme2pkg::chunk_to_dir` (and friends)
+    lets you send code chunk contents to a new file in your
+    subdirectory. This means you don’t have to manage a bunch of files
+    that constitute a package - at least in the early
+    stages.](#the-intent-of-readme2pkg-is-to-let-you-build-quick-packages-right-from-a-readme-the-function-readme2pkgchunk_to_dir-and-friends-lets-you-send-code-chunk-contents-to-a-new-file-in-your-subdirectory-this-means-you-dont-have-to-manage-a-bunch-of-files-that-constitute-a-package---at-least-in-the-early-stages)
       - [Background and motivation](#background-and-motivation)
       - [Other’s reflecting on how it might be difficult to find the
         ‘narrative’ from an R
@@ -18,19 +22,16 @@
         usethis::use\_readme\_rmd()](#c-create-readmermd-in-a-directory-via-usethisuse_readme_rmd)
   - [Part 1. Develop functionality (in
     readme)](#part-1-develop-functionality-in-readme)
+      - [pull in `return_chunk_code`, which is in a development
+        package…](#pull-in-return_chunk_code-which-is-in-a-development-package)
       - [write `chunk_to_dir()`](#write-chunk_to_dir)
       - [write `chunk_to_r()` and
         `chunk_to_tests_testthat()`](#write-chunk_to_r-and-chunk_to_tests_testthat)
       - [Try it out](#try-it-out)
-  - [Part 2. Packaging and documentation 🚧 ✅ ()from
-    readme](#part-2-packaging-and-documentation---from-readme)
-      - [Step i. Minimal requirements for github package. Have
-        you:](#step-i-minimal-requirements-for-github-package-have-you)
-          - [Created files for package archetecture with
-            `devtools::create("./ggbarlabs")`
-            ✅](#created-files-for-package-archetecture-with-devtoolscreateggbarlabs-)
-          - [Moved functions R folder? ✅](#moved-functions-r-folder-)
-          - [Added roxygen skeleton? ✅](#added-roxygen-skeleton-)
+  - [Efficiently writing convenience functions with templating and
+    expansion](#efficiently-writing-convenience-functions-with-templating-and-expansion)
+      - [`chunk_template_write_variants()`](#chunk_template_write_variants)
+          - [Moving functions R folder… ✅](#moving-functions-r-folder-)
           - [Managed dependencies? ✅](#managed-dependencies-)
           - [Chosen a license? ✅](#chosen-a-license-)
           - [Run `devtools::check()` and addressed errors?
@@ -81,30 +82,45 @@ build_package_w_readme <- T
 print_reports_action <- ifelse(print_reports, "asis", "hide")
 ```
 
-# {readme2pkg} lets you send code chunks to .R files in a project subdirectory.
+# The intent of {readme2pkg} is to let you build quick packages right from a readme. The function `readme2pkg::chunk_to_dir` (and friends) lets you send code chunk contents to a new file in your subdirectory. This means you don’t have to manage a bunch of files that constitute a package - at least in the early stages.
 
-Code chunks are cool in storytelling, and sometimes we’d like to reuse
-this code verbatim and send the contents to .R files. chunk\_to\_dir and
-friends are meant to solve this problem.
+Also, the
+[EvaMaeRey/readme2pkg.template](https://github.com/EvaMaeRey/readme2pkg.template)
+repo on github template repository that meant to complement the
+readme2pkg workflow. Using the readme.Rmd in the template, you can
+populate the sections with your material (introduction and functions,
+etc). And the readme contains a checklist that will help you get through
+the steps of creating a package, including building the correct file
+architecture, licensing, documentation, and builds. Most of this is
+accomplished through the {devtools} and {usethis} packages. Code is
+included that lets you ‘check-off’ the items as you run the code.
 
-Here is the contents of a code chunk named “add\_one\_code”
+Imagine you write this function in a code chunk:
 
-``` r
-add_one <- function(x){
+```` verbatim
+
+
+```r
+times_two <- function(x){
   
-  return(x + 1)
+  x*2
   
 }
 ```
+````
 
-with readme2pkg::chunk\_to\_dir we are able to create an ‘R file with
+With readme2pkg::chunk\_to\_dir we are able to create an ‘R file with
 the name ’add\_one\_code.R’ that contains the code from the chunk as
-follows. It will be saved in the R directory.
+follows. It will be saved in the R directory, which will make it part of
+the package.
 
-``` r
+```` verbatim
 
-readme2pkg::chunk_to_dir("add_one_code", dir = "R")
+
+```r
+readme2pkg::chunk_to_dir("times_two", dir = "R")
 ```
+````
 
 ## Background and motivation
 
@@ -206,6 +222,129 @@ You can do this from RStudio via New Project -\> Version Control -\> Git
 
 # Part 1. Develop functionality (in readme)
 
+## pull in `return_chunk_code`, which is in a development package…
+
+``` r
+library(tidyverse)
+```
+
+```` r
+# Awesome!
+check_is_live <- function(){
+  
+  is_live <- FALSE
+  
+  # Check to see if we're in editor context
+  if (requireNamespace("rstudioapi", quietly = TRUE) &&
+      rstudioapi::isAvailable()) {
+
+    is_live <- tryCatch({
+      rstudioapi::getSourceEditorContext()
+      TRUE
+    }, error = function(e) FALSE)
+
+  }  
+  
+  return(is_live)
+  
+}
+
+# so cool!
+text_chunk_extract <- function(.text, chunk_name) {
+
+  # Find the start of the desired chunk
+  chunk_regex <- paste0('\\`\\`\\`\\{[A-z]+ ', chunk_name, '(\\}|(,.*\\}))$')
+
+  start_chunk <- .text %>%
+    str_which(chunk_regex)
+
+  if (length(start_chunk) == 0) {
+
+    stop(paste0("Error: No chunk found with name '", chunk_name, "'"))
+
+  } else if (length(start_chunk) > 1) {
+
+    stop(paste0("Error: Duplicate chunk name '", chunk_name, "'"))
+
+  }
+
+  end_chunk <- .text[-c(1:start_chunk)] %>%
+    str_which(fixed("```")) %>%
+    min() + start_chunk
+
+  chunk_text <- .text[(start_chunk):(end_chunk)] %>%
+    str_c(collapse = "\n")
+
+  attributes(chunk_text) <- NULL
+
+  return(chunk_text)
+
+}
+
+chunk_remove_fencing_and_options <- function(code_chunk){
+  
+  # does not yet, in fact, remove options like these: 
+  # | my-chunk, echo = FALSE, fig.width = 10,
+  # | fig.cap = "This is a long long
+  # |   long long caption."
+  
+ chunk_as_vec <- str_split(code_chunk,"\\n")[[1]] 
+ 
+ # remove fencing which are first and last lines
+ return(chunk_as_vec[2:(length(chunk_as_vec)-1)])
+  
+}
+
+# wow!
+return_chunk_code_live <- function(chunk_name) {
+
+  
+    ed        <- rstudioapi::getSourceEditorContext()
+    source    <- ed$contents
+
+    # can we use knitr tools to directly parse source for us? 
+    # tmp       <- tempfile()
+    # writeLines(source, tmp)
+    # readLines(tmp)
+    # knitr::knit_code$get(name = tmp)
+    
+    my_code_chunk  <- text_chunk_extract(.text = source, chunk_name)
+
+    # If neither of those worked, error
+    if (is.null(my_code_chunk)) {
+
+    stop(paste0("Error: No chunk found with name '", chunk_name, "'"))
+
+    }
+
+    # remove chunk fencing, first and last lines
+    my_code <- chunk_remove_fencing_and_options(my_code_chunk)
+    
+    return(my_code)
+  
+}
+
+#' Title
+#'
+#' @param chunk_name a character string with the name of the chunk of interest
+#'
+#' @return a vector of the code contained in the referenced chunk
+#' @export 
+#'
+#' @examples
+return_chunk_code <- function(chunk_name){
+  
+  is_live <- check_is_live()
+  
+  if(is_live){
+    return_chunk_code_live(chunk_name)
+  }else{
+  knitr::knit_code$get(name = chunk_name) %>% as.vector()
+    }
+
+}
+````
+
 Write useful code (might be rearrangement of verbose code).
 
 `chunk_to_dir()` will create a file with the chunk name
@@ -228,13 +367,41 @@ chunk_to_dir <- function(chunk_name, dir = "R/", extension = ".R"){
 
     for(i in 1:length(chunk_name)){
 
-  knitr::knit_code$get(name = chunk_name[i]) |>
+  # knitr::knit_code$get(name = chunk_name[i]) |>
+  return_chunk_code(chunk_name = chunk_name[i]) |>  
     paste(collapse = "\n") |>
-    writeLines(con = paste0(dir, chunk_name[i], extension))
+    writeLines(con = paste0(dir,"/",  chunk_name[i], extension))
 
     }
   
   }
+```
+
+``` r
+return_chunk_code("chunk_to_dir")
+#>  [1] "#' Title"                                                               
+#>  [2] "#'"                                                                     
+#>  [3] "#' @param chunk_name"                                                   
+#>  [4] "#' @param dir"                                                          
+#>  [5] "#' @param extension"                                                    
+#>  [6] "#' @param file_name"                                                    
+#>  [7] "#'"                                                                     
+#>  [8] "#' @return"                                                             
+#>  [9] "#' @export"                                                             
+#> [10] "#'"                                                                     
+#> [11] "#' @examples"                                                           
+#> [12] "chunk_to_dir <- function(chunk_name, dir = \"R/\", extension = \".R\"){"
+#> [13] ""                                                                       
+#> [14] "    for(i in 1:length(chunk_name)){"                                    
+#> [15] ""                                                                       
+#> [16] "  # knitr::knit_code$get(name = chunk_name[i]) |>"                      
+#> [17] "  return_chunk_code(chunk_name = chunk_name[i]) |>  "                   
+#> [18] "    paste(collapse = \"\\n\") |>"                                       
+#> [19] "    writeLines(con = paste0(dir,\"/\",  chunk_name[i], extension))"     
+#> [20] ""                                                                       
+#> [21] "    }"                                                                  
+#> [22] "  "                                                                     
+#> [23] "  }"
 ```
 
 ## write `chunk_to_r()` and `chunk_to_tests_testthat()`
@@ -284,6 +451,7 @@ We’re gonna send our code to the r folder… With the functions we just
 created. Knitr never stops 😮\!
 
 ``` r
+chunk_to_r("knitcodegetlive")
 chunk_to_r("chunk_to_dir")
 chunk_to_r("convenience")
 ```
@@ -293,45 +461,106 @@ exactly sure what the best practice is for functions that create new
 files and self reference as knitr functions do. Would be good to get
 some technical expertise on that.
 
------
-
-# Part 2. Packaging and documentation 🚧 ✅ ()from readme
-
-## Step i. Minimal requirements for github package. Have you:
-
-### Created files for package archetecture with `devtools::create("./ggbarlabs")` ✅
-
-### Moved functions R folder? ✅
-
-You can use this code to list all names of code chunks
+# Efficiently writing convenience functions with templating and expansion
 
 ``` r
-knitr::knit_code$get() |> names() # lists all current doc chunk names including from child README.rmd
-#>  [1] "unnamed-chunk-1"  "unnamed-chunk-2"  "add_one_code"     "unnamed-chunk-3" 
-#>  [5] "chunk_to_dir"     "convenience"      "unnamed-chunk-4"  "unnamed-chunk-5" 
-#>  [9] "unnamed-chunk-6"  "unnamed-chunk-7"  "unnamed-chunk-8"  "unnamed-chunk-9" 
-#> [13] "unnamed-chunk-10" "unnamed-chunk-11" "unnamed-chunk-12" "unnamed-chunk-13"
-#> [17] "unnamed-chunk-14"
+#' Print specific character string
+#'
+#' @return a character string
+#' @export 
+#'
+#' @examples
+#' print_hello()
+print_hello <- function(){
+  
+  "Hello"
+  
+}
 ```
+
+## `chunk_template_write_variants()`
+
+``` r
+#' Title
+#'
+#' @param chunk_name 
+#' @param chunk_name_suffix 
+#' @param file_name 
+#' @param dir 
+#' @param replace1 
+#' @param replacements1 
+#' @param replace2 
+#' @param replacements2 
+#' @param replace3 
+#' @param replacements3 
+#' @param replace4 
+#' @param replacements4 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+chunk_template_write_variants <- function(chunk_name, 
+                                             chunk_name_suffix = "_variants",
+                                             file_name = NULL,
+                                             dir = "R/",
+                                             replace1, 
+                                             replacements1, 
+                                             replace2 = NULL, 
+                                             replacements2 = NULL, 
+                                             replace3 = NULL, 
+                                             replacements3 = NULL, 
+                                             replace4 = NULL, 
+                                             replacements4 = NULL){
+  
+  template <-  return_chunk_code(chunk_name) 
+  script_contents <- c()  
+  if(is.null(file_name)){file_name <- paste0(chunk_name, chunk_name_suffix, ".R")}
+
+for(i in 1:length(replacements1)){
+  
+  template_mod <- stringr::str_replace(template, replace1, replacements1[i])
+  
+  if(!is.null(replace2)){
+    template_mod <- stringr::str_replace(template_mod, replace2, replacements2[i])}
+  
+    if(!is.null(replace3)){
+    template_mod <- stringr::str_replace(template_mod, replace3, replacements3[i])}
+  
+      if(!is.null(replace4)){
+    template_mod <- stringr::str_replace(template_mod, replace4, replacements4[i])}
+  
+  
+  script_contents <- c(script_contents, template_mod)
+  
+}  
+  
+ writeLines(script_contents, paste0(dir, file_name))
+  
+}
+```
+
+``` r
+chunk_template_write_variants("print_hello",
+                                 replace1 = "hello",
+                                 replacements1 = c("hello", "bye"),
+                                 replace2 = "Hello",
+                                 replacements2 = c("Hello", "Bye"))
+```
+
+``` r
+chunk_to_r("chunk_template_write_variants")
+```
+
+-----
+
+### Moving functions R folder… ✅
 
 Then send code chunks to directories as desired.
 
 ``` r
-library(readme2pkg)
-#> 
-#> Attaching package: 'readme2pkg'
-#> The following objects are masked _by_ '.GlobalEnv':
-#> 
-#>     chunk_to_dir, chunk_to_r, chunk_to_tests_testthat
-chunk_to_r("chunk_to_dir")
-chunk_to_r("convenience")
+## Done above
 ```
-
-### Added roxygen skeleton? ✅
-
-For auto documentation and making sure proposed functions are
-*exported*, add roxygen skeleton. in RStudio, Place cursor in code, then
-go to navbar, and Code -\> Insert Roxygen Skeleton
 
 ### Managed dependencies? ✅
 
@@ -345,6 +574,8 @@ which can be done automatically with use this:
 
 ``` r
 usethis::use_package("knitr")
+usethis::use_package("stringr")
+usethis::use_pipe()
 ```
 
 ### Chosen a license? ✅
@@ -405,8 +636,8 @@ all[11:17]
 #> [3] "[1] stats     graphics  grDevices utils     datasets  methods   base     "
 #> [4] ""                                                                         
 #> [5] "other attached packages:"                                                 
-#> [6] "[1] readme2pkg_0.0.0.9000"                                                
-#> [7] ""
+#> [6] " [1] lubridate_1.9.2      forcats_1.0.0        stringr_1.5.0       "      
+#> [7] " [4] dplyr_1.1.0          purrr_1.0.1          readr_2.1.4         "
 ```
 
 ## `devtools::check()` report
@@ -418,12 +649,17 @@ devtools::check(pkg = ".")
 #> ℹ Loading readme2pkg
 #> Warning: ── Conflicts ─────────────────────────────────────────── readme2pkg conflicts
 #> ──
+#> ✖ `chunk_template_write_variants` masks
+#>   `readme2pkg::chunk_template_write_variants()`.
 #> ✖ `chunk_to_dir` masks `readme2pkg::chunk_to_dir()`.
 #> ✖ `chunk_to_r` masks `readme2pkg::chunk_to_r()`.
-#> ✖ `chunk_to_tests_testthat` masks `readme2pkg::chunk_to_tests_testthat()`.
+#>   … and more.
 #> ℹ Did you accidentally source a file rather than using `load_all()`?
-#>   Run `rm(list = c("chunk_to_dir", "chunk_to_r", "chunk_to_tests_testthat"))`
-#>   to remove the conflicts.
+#>   Run `rm(list = c("chunk_template_write_variants", "chunk_to_dir",
+#>   "chunk_to_r", "chunk_to_tests_testthat", "return_chunk_code"))` to remove the
+#>   conflicts.
+#> Warning: [chunk_template_write_variants.R:16] @return requires a value
+#> Warning: [chunk_template_write_variants.R:19] @examples requires a value
 #> Warning: [chunk_to_dir.R:3] @param requires name and description
 #> Warning: [chunk_to_dir.R:4] @param requires name and description
 #> Warning: [chunk_to_dir.R:5] @param requires name and description
@@ -433,6 +669,10 @@ devtools::check(pkg = ".")
 #> Warning: [convenience.R:8] @examples requires a value
 #> Warning: [convenience.R:20] @return requires a value
 #> Warning: [convenience.R:23] @examples requires a value
+#> Warning: [knitcodegetlive.R:103] @examples requires a value
+#> Writing 'NAMESPACE'
+#> Writing 'NAMESPACE'
+#> Writing 'pipe.Rd'
 #> Error: R CMD check found WARNINGs
 ```
 
@@ -454,14 +694,20 @@ fs::dir_tree(recurse = T)
 #> ├── LICENSE.md
 #> ├── NAMESPACE
 #> ├── R
+#> │   ├── chunk_template_write_variants.R
 #> │   ├── chunk_to_dir.R
-#> │   └── convenience.R
+#> │   ├── convenience.R
+#> │   ├── knitcodegetlive.R
+#> │   └── utils-pipe.R
 #> ├── README.Rmd
 #> ├── README.md
 #> ├── man
+#> │   ├── chunk_template_write_variants.Rd
 #> │   ├── chunk_to_dir.Rd
 #> │   ├── chunk_to_r.Rd
-#> │   └── chunk_to_tests_testthat.Rd
+#> │   ├── chunk_to_tests_testthat.Rd
+#> │   ├── pipe.Rd
+#> │   └── return_chunk_code.Rd
 #> └── readme2pkg.Rproj
 ```
 
