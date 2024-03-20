@@ -17,7 +17,7 @@
 #' @export
 #'
 #' @examples
-chunk_template_write_variants <- function(chunk_name, 
+chunk_variants_to_dir <- function(chunk_name, 
                                              chunk_name_suffix = "_variants",
                                              file_name = NULL,
                                              dir = "R/",
@@ -36,16 +36,16 @@ chunk_template_write_variants <- function(chunk_name,
 
 for(i in 1:length(replacements1)){
   
-  template_mod <- stringr::str_replace(template, replace1, replacements1[i])
+  template_mod <- stringr::str_replace_all(template, replace1, replacements1[i])
   
   if(!is.null(replace2)){
-    template_mod <- stringr::str_replace(template_mod, replace2, replacements2[i])}
+    template_mod <- stringr::str_replace_all(template_mod, replace2, replacements2[i])}
   
     if(!is.null(replace3)){
-    template_mod <- stringr::str_replace(template_mod, replace3, replacements3[i])}
+    template_mod <- stringr::str_replace_all(template_mod, replace3, replacements3[i])}
   
       if(!is.null(replace4)){
-    template_mod <- stringr::str_replace(template_mod, replace4, replacements4[i])}
+    template_mod <- stringr::str_replace_all(template_mod, replace4, replacements4[i])}
   
   
   script_contents <- c(script_contents, template_mod)
